@@ -13,26 +13,13 @@ A simple Python tool to extract slides from a lecture PDF, convert them into ima
    cd lecture-pdf-transcript-generator
    ```
 
-2. **Create a Virtual Environment (Optional but Recommended)**
-
-   ```bash
-   python3 -m venv venv
-   source venv/bin/activate  # On Windows: venv\Scripts\activate
-   ```
-
-3. **Install Dependencies**
+2. **Install Dependencies**
 
    ```bash
    pip install -r requirements.txt
    ```
-
-   *If you don't have a `requirements.txt`, install the necessary libraries manually:*
-
-   ```bash
-   pip install pdf2image requests
-   ```
-
-4. **Install Poppler**
+   
+3. **Install Poppler**
 
     Poppler is the underlying project that does the magic in pdf2image. You can check if you already have it installed by calling `pdftoppm -h` in your terminal/cmd.
 

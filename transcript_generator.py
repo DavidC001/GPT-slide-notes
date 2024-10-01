@@ -4,7 +4,7 @@ import requests
 from pdf2image import convert_from_path
 
 # Configuration
-API_KEY = "YOUR_OPENAI_API_KEY"  # Replace with your OpenAI API key
+API_KEY = "YOUR-OPENAI-KEY"  # Replace with your OpenAI API key
 MODEL_NAME = "gpt-4o-mini"        # Replace with the correct model name if different
 
 PDF_PATH = "lecture.pdf"          # Path to your PDF file
@@ -63,7 +63,7 @@ def generate_transcript(image_path, context=[]):
                 "content": [
                     {
                         "type": "text",
-                        "text": f"Please generate the notes for the slide in the image. You should follow the following structure, whit the slide title, followed by its content rewritten to be readable and explain everything while also minimizing the number of bulletpoints finishing with \"---\".\nHere is an example:\n\n{prompt}\n\n IMPORTANT: you should only respond with the provided format, do not add any additional information, diretly output the requested content. {context}"
+                        "text": f"Please generate the notes for the slide in the image. You should follow the following structure, whit the slide title, followed by its content rewritten to be readable and explain everything finishing with \"---\".\nHere is an example:\n\n{prompt}\n\n IMPORTANT: you should only respond with the provided format, do not add any additional information, diretly output the requested content. {context}"
                     },
                     {
                         "type": "image_url",

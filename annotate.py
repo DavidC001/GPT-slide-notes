@@ -115,7 +115,7 @@ def main():
     print(f"Saving transcripts to {TRANSCRIPT_FILE}...")
     with open(TRANSCRIPT_FILE, 'w', encoding='utf-8') as f:
         for slide_num, transcript in transcripts:
-            f.write(f"---\nSlide {slide_num} Transcript:\n\n{transcript}\n\n")
+            f.write(f"{transcript}\n\n---\n")
 
     print("All transcripts have been generated and saved.")
 

@@ -84,7 +84,6 @@ def generate_transcript(image_path):
         transcript = response_data['choices'][0]['message']['content'].strip()
         # remove everything before "###"
         transcript = transcript[transcript.find("###"):]
-        breakpoint()
         return transcript
     else:
         print(f"Error: {response.status_code} - {response.text}")

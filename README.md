@@ -9,7 +9,7 @@ A simple Python tool to extract slides from a lecture PDF, convert them into ima
 1. **Clone the Repository**
 
    ```bash
-   git clone https://github.com/yourusername/lecture-pdf-transcript-generator.git
+   git clone https://github.com/DavidC001/GPT-slide-notes.git
    cd lecture-pdf-transcript-generator
    ```
 

@@ -4,11 +4,15 @@ import requests
 from pdf2image import convert_from_path
 
 # Configuration
-API_KEY = "OPENAI-KEY"  # Replace with your OpenAI API key
-PDF_PATH = "PDF_PATH"          # Path to your PDF file
+API_KEY = "YOUR_OPENAI_API_KEY"  # Replace with your OpenAI API key
+MODEL_NAME = "gpt-4o-mini"        # Replace with the correct model name if different
+
+PDF_PATH = "lecture.pdf"          # Path to your PDF file
+CONTEXT = 2 # number of slide transcriptions to include in the context
+
 IMAGE_DIR = "slide_images"        # Directory to save extracted images
 TRANSCRIPT_FILE = "transcripts.txt"  # Output transcript file
-MODEL_NAME = "gpt-4o-mini"        # Replace with the correct model name if different
+
 
 # Ensure the image directory exists
 os.makedirs(IMAGE_DIR, exist_ok=True)
@@ -19,7 +23,7 @@ def encode_image(image_path):
         return base64.b64encode(image_file.read()).decode('utf-8')
 
 # Function to generate transcript for a single image
-def generate_transcript(image_path):
+def generate_transcript(image_path, context=[]):
     base64_image = encode_image(image_path)
     
     # Prepare the few-shot examples
@@ -43,6 +47,10 @@ def generate_transcript(image_path):
 ---
     """
 
+    context = ""
+    if len(context) > 0:
+        context = "Here is the transcropts from some of the previous slides to use as additional context:\n"+"\n\n---\n".join(context)
+
     # Complete prompt with few-shot and current slide
     prompt = few_shot_prompt + "\n"
 
@@ -55,7 +63,7 @@ def generate_transcript(image_path):
                 "content": [
                     {
                         "type": "text",
-                        "text": f"Please generate the notes for the slide in the image. You should follow the following structure, whit the slide title, followed by its content rewritten to be readable and explain everything while also minimizing the number of bulletpoints finishing with \"---\".\nHere is an example:\n\n{prompt}\n\n IMPORTANT: you should only respond with the provided format, do not add any additional information, diretly output the requested content."
+                        "text": f"Please generate the notes for the slide in the image. You should follow the following structure, whit the slide title, followed by its content rewritten to be readable and explain everything while also minimizing the number of bulletpoints finishing with \"---\".\nHere is an example:\n\n{prompt}\n\n IMPORTANT: you should only respond with the provided format, do not add any additional information, diretly output the requested content. {context}"
                     },
                     {
                         "type": "image_url",
@@ -103,10 +111,10 @@ def main():
         print(f"Saved {image_path}")
 
         print(f"Generating transcript for Slide {i+1}...")
-        transcript = generate_transcript(image_path)
+        transcript = generate_transcript(image_path, transcripts[-CONTEXT:])
 
         if transcript:
-            transcripts.append((i+1, transcript))
+            transcripts.append(transcript)
             print(f"Transcript for Slide {i+1} generated successfully.")
         else:
             print(f"Failed to generate transcript for Slide {i+1}.")
@@ -114,7 +122,7 @@ def main():
     # Save all transcripts to a text file
     print(f"Saving transcripts to {TRANSCRIPT_FILE}...")
     with open(TRANSCRIPT_FILE, 'w', encoding='utf-8') as f:
-        for slide_num, transcript in transcripts:
+        for transcript in transcripts:
             f.write(f"{transcript}\n\n---\n")
 
     print("All transcripts have been generated and saved.")

@@ -4,7 +4,7 @@ A simple Python tool to extract slides from a lecture PDF, convert them into ima
 
 ## Getting Started
 
-### Installation
+### ⏬ Installation
 
 1. **Clone the Repository**
 
@@ -42,7 +42,7 @@ A simple Python tool to extract slides from a lecture PDF, convert them into ima
     3. Add the `bin/` directory to your [PATH](https://www.architectryan.com/2018/03/17/add-to-the-path-on-windows-10/)
     4. Test that all went well by opening `cmd` and making sure that you can call `pdftoppm -h`
 
-### Configuration
+### ⚙️ Configuration
 
 1. **Obtain OpenAI API Key**
 
@@ -51,14 +51,14 @@ A simple Python tool to extract slides from a lecture PDF, convert them into ima
 
 2. **Set Up Variables**
 
-   Open the Python script (`transcript_generator.py`) and update the following variables:
+   - Create a `.env` file
+   - Save your API key in the `.env` file:
 
-   ```python
-   API_KEY = "YOUR_OPENAI_API_KEY"    # Replace with your OpenAI API key
-   PDF_PATH = "lecture.pdf"           # Replace with the path to your lecture PDF
+   ```
+   API_KEY="YOUR_OPENAI_API_KEY"
    ```
 
-## Usage
+## ⚡ Usage
 
 Run the script using Python:
 
@@ -68,9 +68,17 @@ python transcript_generator.py
 
 The script will:
 
-1. Convert each page of the specified PDF into an image.
-2. Send each image to the `gpt-4o-mini` model to generate a structured transcript, along with the context of the previous `CONTEXT` slide transcripts.
-3. Save all transcripts to the `TRANSCRIPT_FILE` file.
+1. Automatically load your OpenAI API key, allowing you to use a different one, if needed.
+2. Prompt you to specify the PDF to be converted.
+3. Convert each page of the specified PDF into an image.
+4. Send each image to the `gpt-4o-mini` model to generate a structured transcript, along with the context of the previous `CONTEXT` slide transcripts.
+5. Save all transcripts to the `TRANSCRIPT_FILE` file.
+
+> [!TIP]
+> If you don't want to convert the whole PDF, but only some pages, you can extract the pages before converting the PDF:
+> ```bash
+> python extract_pages.py
+> ```
 
 ## License
 

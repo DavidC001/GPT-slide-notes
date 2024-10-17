@@ -34,7 +34,7 @@ def encode_image(image_path):
         return base64.b64encode(image_file.read()).decode('utf-8')
 
 # Function to generate transcript for a single slide
-def generate_transcript(slide_text, previous_transcripts=[]):
+def generate_transcript(slide_text, previous_transcripts=[], api_key=API_KEY, api_endpoint=API_ENDPOINT, model_name=MODEL_NAME):
     # Prepare the few-shot example
     few_shot_prompt = """
 ### Concepts Representation (1)
@@ -73,7 +73,7 @@ IMPORTANT: you should only respond with the provided format, do not add any addi
 
     # Prepare the payload
     payload = {
-        "model": MODEL_NAME,
+        "model": model_name,
         "messages": [
             {
                 "role": "user",
@@ -87,11 +87,11 @@ IMPORTANT: you should only respond with the provided format, do not add any addi
 
     headers = {
         "Content-Type": "application/json",
-        "Authorization": f"Bearer {API_KEY}"
+        "Authorization": f"Bearer {api_key}"
     }
 
     # Send the request to the OpenAI API
-    response = requests.post(API_ENDPOINT, headers=headers, json=payload)
+    response = requests.post(api_endpoint, headers=headers, json=payload)
 
     if response.status_code == 200:
         response_data = response.json()
@@ -138,7 +138,7 @@ class PDFProcessorThread(QThread):
 
                 self.status.emit(f"Generating transcript for Slide {i + 1}...")
                 context_slides = transcripts[-CONTEXT:]
-                transcript = generate_transcript(slide_text, context_slides)
+                transcript = generate_transcript(slide_text, context_slides, self.api_key, self.api_endpoint, self.model_name)
 
                 if transcript:
                     transcripts.append(transcript)

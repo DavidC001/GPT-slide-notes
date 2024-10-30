@@ -20,7 +20,7 @@ load_dotenv()
 API_KEY = os.getenv("API_KEY", "")
 API_ENDPOINT = os.getenv("API_ENDPOINT", "https://api.openai.com/v1/chat/completions")
 MODEL_NAME = os.getenv("MODEL_NAME", "gpt-4o-mini")
-CONTEXT = 3  # Number of previous transcripts to include as context
+CONTEXT = 5 # Number of previous transcripts to include as context
 
 IMAGE_DIR = "slide_images"  # Directory to save extracted images
 SETTINGS_FILE = "settings.txt"  # File to save/load settings
@@ -50,25 +50,44 @@ Concepts are also linked semantically to other concepts. This is done through tw
 These relationships help form a structured network of concepts that enable deeper understanding and categorization of information.
 
 ---
-    """
+
+### Boids
+
+The concept of **Boids** represents a foundational example of **Computational Swarm Intelligence**, illustrating how simple agents can simulate the flocking behavior of birds. These agents, referred to as "boids" (short for "bird-oid objects"), operate under the assumption that each boid perceives the angle and distance of its neighboring boids, as proposed by Reynolds in 1986.
+
+Boids adhere to three fundamental rules that enable them to exhibit complex behaviors:
+
+1. **Separation**: Each boid maintains a specified distance from its neighboring boids to avoid crowding and collisions. This rule ensures that the boids do not cluster too closely together, which could lead to chaos.
+
+2. **Cohesion**: A boid moves towards the center of mass of its neighboring boids. This rule promotes group unity, encouraging boids to stay together as a cohesive flock.
+
+3. **Alignment**: A boid aligns its direction and angle with those of its neighboring boids. This rule allows for synchronized movement, contributing to the overall fluidity of the flock's motion.
+
+This model exemplifies how complex behaviors can emerge from straightforward rules, highlighting the principles of swarm intelligence in action.
+"""
 
     # Include previous transcripts as context if available
     context_text = ""
     if previous_transcripts:
-        context_text = "Here are the transcripts from some of the previous slides to use as additional context:\n" + "\n\n---\n".join(previous_transcripts)
+        context_text = "\n\n---\n".join(previous_transcripts)
 
     # Complete prompt with few-shot example, extracted text, and context
-    prompt = f"""{few_shot_prompt}
+    prompt = f"""Please generate the notes for the slide above. You should follow the following structure, with the slide title, followed by its content rewritten to be readable and explain everything, ending with "---".
 
-Here is the partially extracted text from the slide:
+IMPORTANT: you should only respond with the provided format, do not add any additional information, directly output the requested content. You should also avoid to repeat information between multiple slides.
 
+Here is an output example of the expected format:
+```
+{few_shot_prompt}
+```
+Here is the partially extracted text from the slide, you should use this information together with the provided image to generate the notes:
+```
 {slide_text}
-
+```
+Here are the transcripts from some of the previous slides to use as additional context, you should NOT repeat information in here, reference them if needed to do so:
+```
 {context_text}
-
-Please generate the notes for the slide above. You should follow the following structure, with the slide title, followed by its content rewritten to be readable and explain everything, including the graphical elements if useful to do so, finishing with "---".
-
-IMPORTANT: you should only respond with the provided format, do not add any additional information, directly output the requested content.
+```
 """
 
     # Prepare the payload
@@ -81,7 +100,7 @@ IMPORTANT: you should only respond with the provided format, do not add any addi
             }
         ],
         "max_tokens": 1000,
-        "temperature": 0.3,
+        "temperature": 0.7,
         "stop": ["---"]
     }
 
@@ -103,13 +122,6 @@ IMPORTANT: you should only respond with the provided format, do not add any addi
     else:
         return None
 
-# Function to extract text from PDF
-def extract_text_from_pdf(pdf_path):
-    with open(pdf_path, 'rb') as file:
-        pdf_reader = PyPDF2.PdfReader(file)
-        slide_texts = [page.extract_text() if page.extract_text() else "" for page in pdf_reader.pages]
-    return slide_texts
-
 # Worker thread to process the PDF
 class PDFProcessorThread(QThread):
     progress = pyqtSignal(int)
@@ -126,23 +138,39 @@ class PDFProcessorThread(QThread):
         self.save_to_clipboard = save_to_clipboard
         self.save_path = save_path
 
+    # Function to extract text from PDF
+    def extract_text_from_pdf(self,pdf_path):
+        with open(pdf_path, 'rb') as file:
+            pdf_reader = PyPDF2.PdfReader(file)
+            slide_texts = []
+            i = 0
+            for page in pdf_reader.pages:
+                i += 1
+                slide_texts.append(page.extract_text() if page.extract_text() else "")
+                self.progress.emit(int(i / len(pdf_reader.pages) * 100))
+        return slide_texts
+
     def run(self):
         try:
+            self.status.emit("Extracting slides from PDF...")
             pages = convert_from_path(self.pdf_path)
-            slide_texts = extract_text_from_pdf(self.pdf_path)
+            slide_texts = self.extract_text_from_pdf(self.pdf_path)
             transcripts = []
+            
+            self.progress.emit(0)
+            self.status.emit("Generating transcripts for each slide...")
 
             for i, (page, slide_text) in enumerate(zip(pages, slide_texts)):
                 image_path = os.path.join(IMAGE_DIR, f'slide_{i + 1}.jpg')
                 page.save(image_path, 'JPEG')
 
-                self.status.emit(f"Generating transcript for Slide {i + 1}...")
+                # self.status.emit(f"Generating transcript for Slide {i + 1}...")
                 context_slides = transcripts[-CONTEXT:]
                 transcript = generate_transcript(slide_text, context_slides, self.api_key, self.api_endpoint, self.model_name)
 
                 if transcript:
                     transcripts.append(transcript)
-                    self.status.emit(f"Transcript for Slide {i + 1} generated successfully.")
+                    self.status.emit(f"Transcript for Slide {i + 1} generated successfully.\n---------------------\n")
                 else:
                     self.status.emit(f"Failed to generate transcript for Slide {i + 1}.")
 
@@ -326,6 +354,8 @@ class MainWindow(QMainWindow):
 
         self.status_label = QLabel("Status: Waiting for user input.")
         main_layout.addWidget(self.status_label)
+        # do not stretch the window when text is too long
+        self.status_label.setSizePolicy(QSizePolicy.Preferred, QSizePolicy.Fixed)
 
         self.start_button.clicked.connect(self.start_processing)
 
